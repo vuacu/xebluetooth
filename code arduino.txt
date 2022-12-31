@@ -1,0 +1,210 @@
+#include <Servo.h>
+#include <SoftwareSerial.h>
+Servo myservo;  // create servo object to control a servo
+int pos = 0;    // variable to store the servo position
+
+
+const int trig = 6;  
+const int echo = 5;    
+int tien1 = 10;       
+int tien2 = 11;        
+int lui1 = 12;        
+int lui2 = 13;        
+int dongcoservo = 9;   
+
+int gioihan = 25;//khoảng cách nhận biết vật 
+int i;
+int x = 0;
+unsigned long thoigian; 
+int khoangcach;          
+int khoangcachtrai, khoangcachphai;
+int maxspeed=30;
+char bluetooth;
+
+void dokhoangcach();
+void dithang(int duongdi);
+void disangtrai();
+void disangphai();
+void dilui();
+void resetdongco();
+void quaycbsangphai();
+void quaycbsangtrai();
+void setup() {
+  // put your setup code here, to run once:
+  myservo.attach(9); 
+  pinMode(trig, OUTPUT);
+  pinMode(echo, INPUT);   
+
+  pinMode(tien1, OUTPUT);
+  pinMode(tien2, OUTPUT);
+  pinMode(lui1, OUTPUT);
+  pinMode(lui2, OUTPUT);
+  digitalWrite(tien1, 0);
+  digitalWrite(tien2, 0);
+  digitalWrite(lui1, 0);
+  digitalWrite(lui1, 0);
+  myservo.write(90);
+  delay(500);
+  Serial.begin(9600); 
+}
+
+void loop()
+{
+  if (Serial.available() > 0) {  //kiem tra ket noi du lieu
+    bluetooth = Serial.read();   //bien bluetooth nhan gia tri tu thiet bi bluetooth tra ve
+    digitalWrite(tien1, 0);
+    digitalWrite(lui1, 0);
+    digitalWrite(tien2, 0);
+    digitalWrite(lui2, 0);
+    delay(10);
+    switch (bluetooth) {
+      case 'A':
+        tudong();
+        break;
+      case 'S':      
+        digitalWrite(tien1, 0);
+        digitalWrite(lui1, 0);
+        digitalWrite(tien1, 0);
+        digitalWrite(lui2, 0);
+        break;
+      case 'F':
+        digitalWrite(tien1, 1);
+        digitalWrite(tien2, 1);
+        break;
+      case 'B':
+        digitalWrite(lui1, 1);
+        digitalWrite(lui2, 1);
+        break;
+      case 'L':
+        digitalWrite(tien1, 1);
+        //digitalWrite(lui1, 1);
+        break;
+      case 'R':
+        digitalWrite(tien2, 1);
+        //digitalWrite(lui2, 1);
+        break;
+    }
+  }
+}
+
+//   tudong();
+// }
+void tudong(){
+  khoangcach = 0;
+  dokhoangcach();
+  if (khoangcach > gioihan || khoangcach == 0)
+  {
+      dithang();
+  }
+  else
+  {
+    resetdongco();
+    quaycbsangtrai();
+    dokhoangcach();
+    khoangcachtrai = khoangcach;
+    quaycbsangphai();
+    dokhoangcach();
+    khoangcachphai = khoangcach;
+    if (khoangcachphai < 30 && khoangcachtrai < 30) {
+      dilui();
+    }
+    else
+    {
+      if (khoangcachphai >= khoangcachtrai)
+      {        
+        disangphai();
+        delay(1000);
+      }
+      if (khoangcachphai < khoangcachtrai)
+      {
+        disangtrai();
+        delay(1000);
+      }
+    }
+  }
+}
+
+void dithang()
+{
+
+  digitalWrite(tien1, 1);
+  digitalWrite(tien2, 1);
+
+
+}
+
+void disangphai()
+{
+  resetdongco();
+  digitalWrite(lui1, 1);
+  delay(2000);//thời gian lùi
+  digitalWrite(lui1, 0);
+
+
+}
+void disangtrai()
+{
+  resetdongco();
+  digitalWrite(lui2, 1);
+  delay(2000);//thời gian 
+  digitalWrite(lui2, 0);
+
+}
+
+void dilui()
+{
+  resetdongco();
+  for (i = 0; i < 20; i++)
+  digitalWrite(lui1, 1);
+  digitalWrite(lui2, 1);
+  delay(2000);
+
+
+  digitalWrite(lui1, 0);
+  digitalWrite(lui2, 0);
+}
+
+void resetdongco()
+{
+  digitalWrite(tien1, 0);
+  digitalWrite(tien2, 0);
+  digitalWrite(lui1, 0);
+  digitalWrite(lui2, 0);
+}
+
+void dokhoangcach()
+{
+
+  digitalWrite(trig, 0); 
+  delayMicroseconds(2);
+  digitalWrite(trig, 1);  
+  delayMicroseconds(10); 
+  digitalWrite(trig, 0); 
+
+
+  // Đo độ rộng xung 1 ở chân echo.
+  thoigian = pulseIn(echo, 1);
+
+  khoangcach = thoigian / 2 / 29.412;
+
+}
+
+
+void quaycbsangtrai()
+{
+  myservo.write(180);              // tell servo to go to position in variable 'pos'
+  delay(1000);
+  dokhoangcach();
+  myservo.write(90);              // tell servo to go to position in variable 'pos'
+}
+void quaycbsangphai()
+{
+  myservo.write(0);              // tell servo to go to position in variable 'pos'
+  delay(1000);
+  dokhoangcach();
+  myservo.write(90);              // tell servo to go to position in variable 'pos'
+}
+void resetservo()
+{
+  myservo.write(90);
+}
